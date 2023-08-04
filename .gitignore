@@ -1,0 +1,4 @@
+database/backend_db
+backend/static
+__pycache__
+.idea

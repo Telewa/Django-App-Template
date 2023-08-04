@@ -1,0 +1,86 @@
+version: "3.7"
+services:
+  ##########################################################
+  #     Load balancer
+  ##########################################################
+  nginx:
+    image: nginx
+    restart: always
+    volumes:
+      - ./backend/devops/run/wait-for-it.sh:/wait-for-it.sh
+      - ./backend/static/:/data/www/staticfiles
+      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 3000:8080
+    env_file:
+      - ./envs/common.env
+    command: sh -c "/wait-for-it.sh -t 300 backend:8000 && nginx -g \"daemon off;\""
+    depends_on:
+      - backend
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8080/api/health-check",
+          "-L"
+        ]
+      interval: 60s
+      timeout: 20s
+      retries: 30
+
+  ##########################################################
+  #     Django
+  ##########################################################
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./envs/common.env
+      - ./envs/django.env
+      - ./envs/db.env
+    volumes:
+      - ./backend/:/my_app
+    command: bash -c "./devops/run/wait-for-it.sh -t 300 database:5432 && ./devops/run/app.sh"
+    expose:
+      - 8000
+    depends_on:
+      - database
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8000/api/health-check",
+          "-L"
+        ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  ##########################################################
+  #     Postgres
+  ##########################################################
+  database:
+    image: postgres:12.4
+    restart: always
+    env_file:
+      - ./envs/common.env
+      - ./envs/db.env
+    volumes:
+      - ./database/backend_db:/var/lib/postgresql/data
+    expose:
+      - 5432
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
