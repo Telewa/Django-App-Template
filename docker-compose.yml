@@ -11,7 +11,7 @@ services:
       - ./backend/static/:/data/www/staticfiles
       - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - 3000:8080
+      - ${FRONT_END_PORT}:8080
     env_file:
       - ./envs/common.env
     command: sh -c "/wait-for-it.sh -t 300 backend:8000 && nginx -g \"daemon off;\""
@@ -42,13 +42,15 @@ services:
       - ./envs/common.env
       - ./envs/django.env
       - ./envs/db.env
+      - ./envs/rabbit.env
     volumes:
       - ./backend/:/my_app
-    command: bash -c "./devops/run/wait-for-it.sh -t 300 database:5432 && ./devops/run/app.sh"
+    command: bash -c "./devops/run/wait-for-it.sh -t 300 database:5432 && ./devops/run/wait-for-it.sh -t 300 rabbitmq:5672 && ./devops/run/app.sh"
     expose:
       - 8000
     depends_on:
       - database
+      - rabbitmq
     healthcheck:
       test:
         [
@@ -66,7 +68,7 @@ services:
   #     Postgres
   ##########################################################
   database:
-    image: postgres:12.4
+    image: postgres:15.4
     restart: always
     env_file:
       - ./envs/common.env
@@ -81,6 +83,75 @@ services:
           "CMD-SHELL",
           "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
         ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+
+  ##########################################################
+  #     RabbitMQ
+  ##########################################################
+  rabbitmq:
+    container_name: ${RABBITMQ_HOST} # do not remove
+    image: rabbitmq:3.9.29-management
+    restart: always
+    expose:
+      - 5672
+    env_file:
+      - ./envs/common.env
+      - ./envs/rabbit.env
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  ##########################################################
+  #     Celery worker
+  ##########################################################
+  worker:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    restart: always
+    command: bash -c "./devops/run/wait-for-it.sh -t 300 database:5432 && ./devops/run/wait-for-it.sh -t 300 rabbitmq:5672 && ./devops/run/worker.sh"
+    env_file:
+      - ./envs/common.env
+      - ./envs/django.env
+      - ./envs/db.env
+      - ./envs/rabbit.env
+    volumes:
+      - ./backend/:/my_app
+    depends_on:
+      - database
+      - rabbitmq
+    healthcheck:
+      test: celery -A configuration inspect ping
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  ##########################################################
+  #     Celery beat worker
+  ##########################################################
+  celery-beat-worker:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    restart: always
+    command: bash -c "./devops/run/wait-for-it.sh -t 300 database:5432 && ./devops/run/wait-for-it.sh -t 300 rabbitmq:5672 && ./devops/run/celery-beat-worker.sh"
+    env_file:
+      - ./envs/common.env
+      - ./envs/django.env
+      - ./envs/db.env
+      - ./envs/rabbit.env
+    volumes:
+      - ./backend/:/my_app
+    depends_on:
+      - database
+      - rabbitmq
+    healthcheck:
+      test: celery -A configuration inspect ping
       interval: 30s
       timeout: 20s
       retries: 3

@@ -1,21 +1,13 @@
-# basic for the app
-Django==4.0.2
-psycopg2==2.9.3
-structlog==21.5.0
-djangorestframework==3.13.1
-django-waffle==2.2.1
-gunicorn==20.1.0
-
-# to get manapy.py shell_plus
-django-extensions==3.1.5
-ipython==8.11.0
-
-# for tests
-parameterized==0.8.1
+celery==5.3.1
+Django==4.2.4
+django-extensions==3.2.3
+django-import-export==3.2.0
+django-waffle==4.0.0
+djangoql==0.17.1
+djangorestframework==3.14.0
 freezegun==1.2.2
-
-# for sockets
-channels==4.0.0
-
-
-
+gunicorn==21.2.0
+ipython==8.14.0
+parameterized==0.9.0
+psycopg[binary]==3.1.10
+structlog==23.1.0

@@ -9,10 +9,14 @@ Should save you some time getting this basic boilerplate up
 - Docker/compose containers setup
 - Nginx frontend
 - Postgres database
+- RabbitMQ
+- Celery
+- Celery beat worker
+- Celery worker
 
 ### Steps
 - Clone
 - Rename the parent folder
-- Update ALL credentials in the envs folder
+- Update ALL credentials in the envs folder. Or run ./setup.py to help with that
 - !!KEEP THE CREDENTIALS OUT OF THE REPO!!
 - Build whatever you want!

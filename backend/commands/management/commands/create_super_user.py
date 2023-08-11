@@ -5,6 +5,7 @@ from django.core.management import BaseCommand
 from structlog import getLogger
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 logger = getLogger(__file__)

@@ -1,10 +1,11 @@
 from django.contrib import admin
+from djangoql.admin import DjangoQLSearchMixin
 
 from account.models import User
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "username",

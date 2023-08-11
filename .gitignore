@@ -1,4 +1,5 @@
 database/backend_db
 backend/static
+backend/celerybeat-schedule
 __pycache__
 .idea
