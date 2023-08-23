@@ -2,8 +2,8 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-import pytz
 from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
+    "django_celery_beat",
     "waffle",
     "import_export",
     "djangoql",
@@ -137,8 +138,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 def now_in_us_eat_timezone():
-    "Get current time in US/Eastern timezone"
-    return datetime.now(pytz.timezone("Africa/Nairobi"))
+    "Get current time in Africa/Nairobi timezone"
+    return datetime.now(ZoneInfo("Africa/Nairobi"))
 
 
 # ensure shell plus loads all dynamic models as well
@@ -146,6 +147,8 @@ def now_in_us_eat_timezone():
 SHELL_PLUS_IMPORTS = [
     "from django.conf import settings",
     "from django.contrib.auth.hashers import make_password",
+    "from datetime import datetime, timedelta",
+    "from zoneinfo import ZoneInfo",
 ]
 
 # celery configs
@@ -163,6 +166,8 @@ CELERY_BEAT_SCHEDULE = {
         ),  # every hour at 50 minutes past the hour
     },
 }
+# https://docs.celeryq.dev/en/stable/userguide/periodic-tasks.html#using-custom-scheduler-classes
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 

@@ -1,3 +1,3 @@
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
-KE_TIMEZONE = timezone("Africa/Nairobi")
+KE_TIMEZONE = ZoneInfo("Africa/Nairobi")
